@@ -3,71 +3,94 @@ package com.klef.springboot.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 import com.klef.springboot.model.Book;
 import com.klef.springboot.service.BookService;
 
-@RestController
-@RequestMapping("/api/books")
+@Controller
 public class BookController {
 
-	@Autowired
-	private BookService bookservice;
+    @Autowired
+    private BookService bookservice;
 
-	@GetMapping
-	public List<Book> Booklist() {
-		return bookservice.Bookslist();
-	}
+    @GetMapping("/book")
+    public String bookList(Model model) {
+        List<Book> books = bookservice.Bookslist();
+        model.addAttribute("Booklist", books);
+        return "Book";
+    }
 
-	@GetMapping("/{id}")
-	public Book BookByid(@PathVariable Long id) {
-		return bookservice.BookByid(id);
-	}
+    @GetMapping("/{id}")
+    public ResponseEntity<Book> bookById(@PathVariable Long id) {
+        Book book = bookservice.BookByid(id);
+        if (book != null) {
+            return ResponseEntity.ok(book);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 
-	@PostMapping
-	public Book save(@RequestBody Book book) {
-		return bookservice.save(book);
-	}
+    @GetMapping("/addbook")
+    public String addBookForm() {
+        return "bookform";
+    }
 
-	@GetMapping("/d/{id}")
-	public void DeleteByid(@PathVariable Long id) {
-		bookservice.DeleteByid(id);
-	}
+    @PostMapping("/booksave")
+    public String saveBook(@ModelAttribute Book book, Model model) {
+        bookservice.save(book);
+        model.addAttribute("successMessage", "Successfully Registered!");
+        return "bookform";
+    }
 
-	@PutMapping("/{id}")
-	public Book updateBook(@PathVariable Long id, @RequestBody Book book) {
-		// Additional logic to ensure you're updating the correct book
-		return bookservice.save(book);
-	}
+    @DeleteMapping("/delete/{id}")
+    public void deleteById(@PathVariable Long id) {
+       bookservice.DeleteByid(id);
+        
+    }
 
-	@PostMapping("/{bookid}/borrow/{userid}")
-	public ResponseEntity<Book> borrowBook(@PathVariable Long bookid, @PathVariable Long userid) {
-		Book book = bookservice.borrowBook(bookid, userid);
+    @PutMapping("/{id}")
+    public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book updatedBook) {
+        Book existingBook = bookservice.BookByid(id);
+        if (existingBook != null) {
+            // Update the fields of the existing book
+            existingBook.setTitle(updatedBook.getTitle());
+            existingBook.setAuthor(updatedBook.getAuthor());
+            // Any other fields to update
+            bookservice.save(existingBook);
+            return ResponseEntity.ok(existingBook);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 
-		if (book != null) {
-			return ResponseEntity.ok(book);
-		} else {
-			return ResponseEntity.badRequest().build();
-		}
-	}
+    @GetMapping("/borrow-book")
+    public String borrowBookForm() {
+        return "borrow-book";
+    }
 
-	@PostMapping("/{bookid}/return")
-	public ResponseEntity<Book> Return(@PathVariable Long bookid) {
-	    Book book = bookservice.returnBook(bookid);
-	    if (book != null) {
-	        return ResponseEntity.ok(book);
-	    } else {
-	        return ResponseEntity.badRequest().build();
-	    }
-	}
+    @PostMapping("/borrow")
+    @ResponseBody
+    public String borrowBook(@RequestParam Long bookid, @RequestParam Long userid) {
+        Book book = bookservice.borrowBook(bookid, userid);
+        if (book != null) {
+            return "Book ID: " + bookid + ", User ID: " + userid + " - Borrowed successfully!";
+        } else {
+            return "Error: Could not borrow the book with ID: " + bookid + " for User ID: " + userid;
+        }
+    }
 
-
+    @PostMapping("/{bookid}/return")
+    public ResponseEntity<Book> returnBook(@PathVariable Long bookid) {
+        Book book = bookservice.returnBook(bookid);
+        if (book != null) {
+            return ResponseEntity.ok(book);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 }

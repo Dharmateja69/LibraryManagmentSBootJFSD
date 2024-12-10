@@ -1,5 +1,7 @@
 package com.klef.springboot.model;
 
+import java.util.*;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,13 +22,19 @@ public class Book {
 	private String title;
 	private String author;
 	private Boolean borrowed;
+	private Date date;
 	
 //We added a relationship between the Book and User entities to track which user has borrowed a book.
 	@ManyToOne
 	@JoinColumn(name="user_id")
 	private User BorrowedBy;
 	
-	 public boolean isBorrowed() {
+	private String Username;
+
+	
+	
+
+	public boolean isBorrowed() {
 	        return borrowed;
 	    }
 	
@@ -70,5 +78,24 @@ public class Book {
 		BorrowedBy = borrowedBy;
 	}
 
+	public String getUsername() {
+		return Username;
+	}
+
+	public void setUsername(String username) {
+		Username = username;
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
+	
+
+	
 
 }

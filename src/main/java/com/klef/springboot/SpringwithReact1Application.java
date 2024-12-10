@@ -8,7 +8,7 @@ public class SpringwithReact1Application {
 
 	public static void main(String[] args) {
 		SpringApplication.run(SpringwithReact1Application.class, args);
-		System.out.println("Hi this is running!!");
+		System.out.println("Hi this is running port 8081!!");
 	}
 
 }
